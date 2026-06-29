@@ -22,12 +22,12 @@
 			"id": "df117b52791f48abb6ce1a16e49db777",
 		},
 	],
-	// Worker Loader for plugin sandboxing
-	"worker_loaders": [
-		{
-			"binding": "LOADER",
-		},
-	],
+	// Worker Loader for plugin sandboxing (commented out — requires paid Workers plan)
+	// "worker_loaders": [
+	// 	{
+	// 		"binding": "LOADER",
+	// 	},
+	// ],
 	// Drives scheduled publishing, plugin cron, and maintenance (see src/worker.ts)
 	"triggers": {
 		"crons": ["* * * * *"],
