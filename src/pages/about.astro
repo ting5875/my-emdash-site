@@ -1,0 +1,143 @@
+---
+import { getEmDashEntry } from "emdash";
+import { PortableText } from "emdash/ui";
+import Base from "../layouts/Base.astro";
+
+const { entry: page, cacheHint } = await getEmDashEntry("pages", "about");
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+---
+
+<Base title="About">
+	<div class="about-page">
+		<div class="about-grid">
+			<div class="about-main">
+				<h1 class="about-title">About</h1>
+				{page?.data.content ? (
+					<div class="about-body" {...page?.edit?.content}>
+						<PortableText value={page.data.content} />
+					</div>
+				) : (
+					<p class="about-body">Content coming soon.</p>
+				)}
+			</div>
+
+			<aside class="about-sidebar">
+				<div class="sidebar-section">
+					<h2 class="sidebar-heading">Services</h2>
+					<ul class="sidebar-list">
+						<li>Brand Identity</li>
+						<li>Web Design & Development</li>
+						<li>Print Design</li>
+						<li>Photography & Art Direction</li>
+					</ul>
+				</div>
+
+				<div class="sidebar-section">
+					<h2 class="sidebar-heading">Contact</h2>
+					<p>
+						<a href="/contact">Get in touch</a>
+					</p>
+				</div>
+			</aside>
+		</div>
+	</div>
+</Base>
+
+<style>
+	.about-page {
+		max-width: var(--wide-width);
+		margin: 0 auto;
+		padding: var(--spacing-16) var(--spacing-6);
+	}
+
+	.about-grid {
+		display: grid;
+		grid-template-columns: 2fr 1fr;
+		gap: var(--spacing-16);
+		align-items: start;
+	}
+
+	.about-title {
+		font-family: var(--font-serif, var(--font-sans));
+		font-size: var(--font-size-4xl);
+		font-weight: 400;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
+		margin: 0 0 var(--spacing-8);
+	}
+
+	.about-body {
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-relaxed);
+		color: var(--color-text);
+	}
+
+	.about-body :global(p) {
+		margin: 0 0 var(--spacing-5);
+	}
+
+	.about-sidebar {
+		position: sticky;
+		top: calc(var(--nav-height, 64px) + var(--spacing-8));
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-8);
+	}
+
+	.sidebar-heading {
+		font-size: var(--font-size-xs);
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-wider);
+		color: var(--color-muted);
+		margin: 0 0 var(--spacing-4);
+	}
+
+	.sidebar-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.sidebar-list li {
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+	}
+
+	.sidebar-section p {
+		font-size: var(--font-size-sm);
+		color: var(--color-text-secondary);
+		margin: 0;
+	}
+
+	@media (max-width: 768px) {
+		.about-page {
+			padding: var(--spacing-10) var(--spacing-4);
+		}
+
+		.about-grid {
+			grid-template-columns: 1fr;
+			gap: var(--spacing-10);
+		}
+
+		.about-sidebar {
+			position: static;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--spacing-6);
+		}
+
+		.about-title {
+			font-size: var(--font-size-3xl);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.about-sidebar {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

@@ -1,0 +1,224 @@
+---
+import { getEmDashEntry, getEmDashCollection } from "emdash";
+import { PortableText, Image } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect("/work");
+
+let decodedSlug: string;
+try {
+	decodedSlug = decodeURIComponent(slug);
+} catch {
+	return Astro.redirect("/404");
+}
+
+const { entry: project, cacheHint } = await getEmDashEntry("projects", decodedSlug);
+if (!project) return Astro.redirect("/404");
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+const { entries: related } = await getEmDashCollection("projects", {
+	orderBy: { published_at: "desc" },
+	limit: 3,
+});
+const relatedProjects = related.filter((p) => p.id !== project.id).slice(0, 2);
+
+const meta = [project.data.client, project.data.year].filter(Boolean).join(", ");
+---
+
+<Base
+	title={project.data.title ?? "Project"}
+	description={project.data.summary}
+	image={project.data.featured_image?.src}
+	content={{ collection: "projects", id: project.data.id, slug: project.id }}
+>
+	<article class="project">
+		<div class="project-inner">
+			<header class="project-header">
+				{meta && <p class="project-meta" {...project.edit?.meta}>{meta}</p>}
+				<h1 class="project-title" {...project.edit?.title}>{project.data.title}</h1>
+				{project.data.summary && (
+					<p class="project-summary" {...project.edit?.summary}>{project.data.summary}</p>
+				)}
+				{project.data.live_url && (
+					<a
+						href={project.data.live_url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="project-link"
+						{...project.edit?.live_url}
+					>
+						View live project ↗
+					</a>
+				)}
+			</header>
+
+			{project.data.featured_image && (
+				<div class="project-hero" {...project.edit?.featured_image}>
+					<Image image={project.data.featured_image} />
+				</div>
+			)}
+
+			{project.data.content && (
+				<div class="project-body" {...project.edit?.content}>
+					<PortableText value={project.data.content} />
+				</div>
+			)}
+		</div>
+	</article>
+
+	{relatedProjects.length > 0 && (
+		<section class="related">
+			<div class="related-inner">
+				<h2 class="related-label">More Work</h2>
+				<div class="related-grid">
+					{relatedProjects.map((p) => (
+						<ProjectCard
+							title={p.data.title ?? "Untitled"}
+							summary={p.data.summary}
+							featuredImage={p.data.featured_image}
+							href={`/work/${p.id}`}
+							client={p.data.client}
+							year={p.data.year}
+						/>
+					))}
+				</div>
+			</div>
+		</section>
+	)}
+</Base>
+
+<style>
+	.project {
+		padding: var(--spacing-16) 0;
+	}
+
+	.project-inner {
+		max-width: var(--content-width);
+		margin: 0 auto;
+		padding: 0 var(--spacing-6);
+	}
+
+	.project-header {
+		margin-bottom: var(--spacing-10);
+	}
+
+	.project-meta {
+		font-size: var(--font-size-xs);
+		color: var(--color-muted);
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-wide);
+		margin: 0 0 var(--spacing-3);
+	}
+
+	.project-title {
+		font-family: var(--font-serif, var(--font-sans));
+		font-size: clamp(var(--font-size-3xl), 5vw, var(--font-size-4xl));
+		font-weight: 400;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
+		margin: 0 0 var(--spacing-4);
+	}
+
+	.project-summary {
+		font-size: var(--font-size-lg);
+		color: var(--color-text-secondary);
+		line-height: var(--leading-relaxed);
+		margin: 0 0 var(--spacing-4);
+	}
+
+	.project-link {
+		display: inline-block;
+		font-size: var(--font-size-sm);
+		color: var(--color-accent);
+		text-decoration: none;
+		transition: color var(--transition-fast);
+	}
+
+	.project-link:hover {
+		color: var(--color-accent-hover);
+	}
+
+	.project-hero {
+		margin-bottom: var(--spacing-12);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.project-hero :global(img) {
+		width: 100%;
+		height: auto;
+	}
+
+	.project-body {
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-relaxed);
+		color: var(--color-text);
+	}
+
+	.project-body :global(h2) {
+		font-family: var(--font-serif, var(--font-sans));
+		font-size: var(--font-size-2xl);
+		font-weight: 500;
+		margin: var(--spacing-10) 0 var(--spacing-4);
+	}
+
+	.project-body :global(p) {
+		margin: 0 0 var(--spacing-5);
+	}
+
+	.project-body :global(blockquote) {
+		border-left: 3px solid var(--color-accent);
+		padding-left: var(--spacing-5);
+		margin: var(--spacing-8) 0;
+		color: var(--color-text-secondary);
+		font-style: italic;
+	}
+
+	/* Related */
+	.related {
+		border-top: 1px solid var(--color-border-subtle);
+		padding: var(--spacing-16) 0;
+	}
+
+	.related-inner {
+		max-width: var(--wide-width);
+		margin: 0 auto;
+		padding: 0 var(--spacing-6);
+	}
+
+	.related-label {
+		font-size: var(--font-size-xs);
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-wider);
+		color: var(--color-muted);
+		margin: 0 0 var(--spacing-8);
+	}
+
+	.related-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--spacing-8);
+	}
+
+	@media (max-width: 768px) {
+		.project-inner {
+			padding: 0 var(--spacing-4);
+		}
+
+		.project {
+			padding: var(--spacing-10) 0;
+		}
+
+		.related-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.related-inner {
+			padding: 0 var(--spacing-4);
+		}
+	}
+</style>

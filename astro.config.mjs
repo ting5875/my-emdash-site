@@ -34,6 +34,13 @@ export default defineConfig({
 		},
 		{
 			provider: fontProviders.google(),
+			name: "Playfair Display",
+			cssVariable: "--font-serif",
+			weights: [400, 500, 700],
+			fallbacks: ["serif"],
+		},
+		{
+			provider: fontProviders.google(),
 			name: "JetBrains Mono",
 			cssVariable: "--font-mono",
 			weights: [400, 500],

@@ -1,0 +1,201 @@
+---
+export const prerender = false;
+
+import { getEmDashCollection, getTermsForEntries } from "emdash";
+import Base from "../../layouts/Base.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const tagFilter = Astro.url.searchParams.get("tag") ?? undefined;
+
+const { entries: projects, cacheHint } = await getEmDashCollection("projects", {
+	orderBy: { published_at: "desc" },
+	...(tagFilter ? { taxonomy: { tag: tagFilter } } : {}),
+});
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+const projectIds = projects.map((p) => p.data.id);
+const tagsByEntry = projectIds.length
+	? await getTermsForEntries("projects", projectIds, "tag")
+	: new Map();
+
+const allTags = [...new Map(
+	[...tagsByEntry.values()].flat().map((t) => [t.slug, t])
+).values()];
+---
+
+<Base title="Work">
+	<div class="work-page">
+		<header class="page-header">
+			<h1 class="page-title">Work</h1>
+			<p class="page-desc">Projects spanning branding, web design, print, and photography.</p>
+		</header>
+
+		{allTags.length > 0 && (
+			<div class="filter-bar">
+				<a
+					href="/work"
+					class:list={["filter-pill", { active: !tagFilter }]}
+				>
+					All
+				</a>
+				{allTags.map((tag) => (
+					<a
+						href={`/work?tag=${tag.slug}`}
+						class:list={["filter-pill", { active: tagFilter === tag.slug }]}
+					>
+						{tag.label}
+					</a>
+				))}
+			</div>
+		)}
+
+		{projects.length === 0 ? (
+			<div class="empty-state">
+				{tagFilter ? (
+					<>
+						<p>No projects tagged "{tagFilter}".</p>
+						<a href="/work" class="btn-ghost">Clear filter</a>
+					</>
+				) : (
+					<>
+						<p>No projects yet.</p>
+						<a href="/_emdash/admin/content/projects/new" class="btn">
+							Add your first project
+						</a>
+					</>
+				)}
+			</div>
+		) : (
+			<div class="projects-grid">
+				{projects.map((project) => {
+					const tags = (tagsByEntry.get(project.data.id) ?? []).map((t) => ({
+						slug: t.slug,
+						label: t.label,
+					}));
+					return (
+						<ProjectCard
+							title={project.data.title ?? "Untitled"}
+							summary={project.data.summary}
+							featuredImage={project.data.featured_image}
+							href={`/work/${project.id}`}
+							client={project.data.client}
+							year={project.data.year}
+							tags={tags}
+						/>
+					);
+				})}
+			</div>
+		)}
+	</div>
+</Base>
+
+<style>
+	.work-page {
+		max-width: var(--wide-width);
+		margin: 0 auto;
+		padding: var(--spacing-16) var(--spacing-6);
+	}
+
+	.page-header {
+		margin-bottom: var(--spacing-10);
+	}
+
+	.page-title {
+		font-family: var(--font-serif, var(--font-sans));
+		font-size: var(--font-size-4xl);
+		font-weight: 400;
+		letter-spacing: var(--tracking-tight);
+		line-height: var(--leading-tight);
+		margin: 0 0 var(--spacing-3);
+	}
+
+	.page-desc {
+		font-size: var(--font-size-lg);
+		color: var(--color-text-secondary);
+		margin: 0;
+	}
+
+	.filter-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-2);
+		margin-bottom: var(--spacing-10);
+		padding-bottom: var(--spacing-6);
+		border-bottom: 1px solid var(--color-border-subtle);
+	}
+
+	.filter-pill {
+		display: inline-block;
+		padding: var(--spacing-1) var(--spacing-3);
+		font-size: var(--font-size-sm);
+		border: 1px solid var(--color-border);
+		border-radius: 999px;
+		text-decoration: none;
+		color: var(--color-text-secondary);
+		transition:
+			color var(--transition-fast),
+			border-color var(--transition-fast),
+			background var(--transition-fast);
+	}
+
+	.filter-pill:hover,
+	.filter-pill.active {
+		color: var(--color-text);
+		border-color: var(--color-text);
+		background: var(--color-surface);
+	}
+
+	.projects-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--spacing-12) var(--spacing-8);
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-4);
+		text-align: center;
+		padding: var(--spacing-20) 0;
+		color: var(--color-muted);
+	}
+
+	.btn {
+		display: inline-block;
+		padding: var(--spacing-3) var(--spacing-6);
+		background: var(--color-accent);
+		color: var(--color-on-accent);
+		text-decoration: none;
+		border-radius: var(--radius);
+		font-size: var(--font-size-sm);
+		font-weight: 500;
+		transition: background var(--transition-fast);
+	}
+
+	.btn:hover {
+		background: var(--color-accent-hover);
+	}
+
+	.btn-ghost {
+		font-size: var(--font-size-sm);
+		color: var(--color-accent);
+		text-decoration: none;
+	}
+
+	@media (max-width: 768px) {
+		.work-page {
+			padding: var(--spacing-10) var(--spacing-4);
+		}
+
+		.projects-grid {
+			grid-template-columns: 1fr;
+			gap: var(--spacing-10);
+		}
+
+		.page-title {
+			font-size: var(--font-size-3xl);
+		}
+	}
+</style>
